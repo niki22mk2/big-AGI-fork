@@ -154,7 +154,7 @@ export function conversationToMarkdown(conversation: DConversation, hideSystemMe
     switch (message.role) {
       case 'system':
         sender = '✨ System message';
-        text = '<img src="https://i.giphy.com/media/jJxaUysjzO9ri/giphy.webp" width="48" height="48" alt="typing fast meme"/>\n\n' + '*' + text + '*';
+        text = '<img src="https://i.giphy.com/media/xTk9ZvMnbIiIew7IpW/giphy.webp" width="48" height="48" alt="typing fast meme"/>\n\n' + '*' + text + '*';
         break;
       case 'assistant':
         const purpose = message.purposeId || conversation.systemPurposeId || null;

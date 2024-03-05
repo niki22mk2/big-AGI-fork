@@ -59,7 +59,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
   // inputs - reuse the tRPC schema
   const body = await req.json();
   const { access, model, history } = chatStreamingInputSchema.parse(body);
-
+  console.log(model)
   // access/dialect dependent setup:
   //  - requestAccess: the headers and URL to use for the upstream API call
   //  - muxingFormat: the format of the event stream (sse or json-nl)
@@ -74,7 +74,7 @@ export async function llmStreamingRelayHandler(req: NextRequest): Promise<Respon
     let body: object;
     switch (access.dialect) {
       case 'anthropic':
-        requestAccess = anthropicAccess(access, '/v1/complete');
+        requestAccess = anthropicAccess(access, '/v1/messages');
         body = anthropicChatCompletionPayload(model, history, true);
         vendorStreamParser = createStreamParserAnthropic();
         break;
@@ -246,22 +246,81 @@ function createEventStreamTransformer(muxingFormat: MuxingFormat, vendorTextPars
 
 /// Stream Parsers
 
+// function createStreamParserAnthropic(): AIStreamParser {
+//   let hasBegun = false;
+
+//   return (data: string) => {
+
+//     const json: AnthropicWire.Complete.Response = JSON.parse(data);
+//     let text = json.completion;
+
+//     // hack: prepend the model name to the first packet
+//     if (!hasBegun) {
+//       hasBegun = true;
+//       const firstPacket: ChatStreamingFirstOutputPacketSchema = { model: json.model };
+//       text = JSON.stringify(firstPacket) + text;
+//     }
+
+//     return { text, close: false };
+//   };
+// }
+
 function createStreamParserAnthropic(): AIStreamParser {
   let hasBegun = false;
+  let currentMessage: AnthropicWire.Complete.PartialMessage | null = null;
+  let currentContentBlock: AnthropicWire.Complete.ContentBlock | null = null;
 
   return (data: string) => {
+    const json: AnthropicWire.Complete.ResponseStreamingChunk = JSON.parse(data);
 
-    const json: AnthropicWire.Complete.Response = JSON.parse(data);
-    let text = json.completion;
-
-    // hack: prepend the model name to the first packet
-    if (!hasBegun) {
-      hasBegun = true;
-      const firstPacket: ChatStreamingFirstOutputPacketSchema = { model: json.model };
-      text = JSON.stringify(firstPacket) + text;
+    if (json.error) {
+      return { text: `[Anthropic Issue] ${safeErrorString(json.error)}`, close: true };
     }
 
-    return { text, close: false };
+    switch (json.type) {
+      case 'message_start':
+        currentMessage = json.message || null;
+        break;
+
+      case 'content_block_start':
+        currentContentBlock = json.content_block || null;
+        break;
+
+      case 'content_block_delta':
+        if (currentContentBlock && json.delta && json.delta.type === 'text_delta') {
+          currentContentBlock.text += json.delta.text || '';
+          // Return the current content block text
+          let text = json.delta.text || '';
+          if (!hasBegun) {
+            hasBegun = true;
+            const firstPacket: ChatStreamingFirstOutputPacketSchema = { model: currentMessage?.model || '' };
+            text = JSON.stringify(firstPacket) + text;
+          }
+          return { text, close: false };
+        }
+        break;
+
+      case 'content_block_stop':
+        if (currentMessage && currentContentBlock) {
+          currentMessage.content.push(currentContentBlock);
+          currentContentBlock = null;
+        }
+        break;
+
+      case 'message_delta':
+        if (currentMessage && json.delta) {
+          Object.assign(currentMessage, json.delta);
+        }
+        break;
+
+      case 'message_stop':
+        return { text: '', close: true };
+
+      default:
+        break;
+    }
+
+    return { text: '', close: false };
   };
 }
 

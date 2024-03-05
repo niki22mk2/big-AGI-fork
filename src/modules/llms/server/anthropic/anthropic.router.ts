@@ -57,17 +57,39 @@ export function anthropicAccess(access: AnthropicAccessSchema, apiPath: string):
   };
 }
 
+// export function anthropicChatCompletionPayload(model: OpenAIModelSchema, history: OpenAIHistorySchema, stream: boolean): AnthropicWire.Complete.Request {
+//   // encode the prompt for Claude models
+//   const prompt = history.map(({ role, content }) => {
+//     return role === 'assistant' ? `\n\nAssistant: ${content}` : `\n\nHuman: ${content}`;
+//   }).join('') + '\n\nAssistant:';
+//   return {
+//     prompt,
+//     model: model.id,
+//     stream,
+//     ...(model.temperature && { temperature: model.temperature }),
+//     ...(model.maxTokens && { max_tokens_to_sample: model.maxTokens })
+//   };
+// }
+
 export function anthropicChatCompletionPayload(model: OpenAIModelSchema, history: OpenAIHistorySchema, stream: boolean): AnthropicWire.Complete.Request {
-  // encode the prompt for Claude models
-  const prompt = history.map(({ role, content }) => {
-    return role === 'assistant' ? `\n\nAssistant: ${content}` : `\n\nHuman: ${content}`;
-  }).join('') + '\n\nAssistant:';
+  // Extract system prompt from history
+  const systemPrompt = history.find(({ role }) => role === 'system')?.content || '';
+  console.log(model)
+  // Convert history to Anthropic messages format
+  const messages = history
+    .filter(({ role }) => role !== 'system')
+    .map(({ role, content }): AnthropicWire.Complete.RequestMessage => ({
+      role: role === 'user' ? 'user' : 'assistant',
+      content: [{ type: 'text', text: content }],
+    }));
+
   return {
-    prompt,
     model: model.id,
+    system: systemPrompt,
+    messages,
+    max_tokens: model.maxTokens || 1024,
     stream,
     ...(model.temperature && { temperature: model.temperature }),
-    ...(model.maxTokens && { max_tokens_to_sample: model.maxTokens })
   };
 }
 
@@ -126,21 +148,23 @@ export const llmAnthropicRouter = createTRPCRouter({
       const wireCompletions = await anthropicPOST<AnthropicWire.Complete.Response, AnthropicWire.Complete.Request>(
         access,
         anthropicChatCompletionPayload(model, history, false),
-        '/v1/complete',
+        '/v1/messages',
       );
 
       // expect a single output
-      if (wireCompletions.completion === undefined)
+      if (wireCompletions?.content?.length !== 1)
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[Anthropic Issue] No completions` });
       if (wireCompletions.stop_reason === undefined)
         throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: `[Anthropic Issue] No stop_reason` });
 
       // check for a function output
+      //parseChatGenerateOutput(content as AnthropicWire.Complete.ResponseMessageContent, finish_reason)
       return {
-        role: 'assistant',
+        role: "assistant",
+        content: wireCompletions.content[0].text,
         finish_reason: wireCompletions.stop_reason === 'stop_sequence' ? 'stop' : 'length',
-        content: wireCompletions.completion || '',
       };
     }),
 
 });
+

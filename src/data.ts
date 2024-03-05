@@ -104,17 +104,9 @@ Current date: {{LocaleNow}}
 Actions should be denoted by "*" and a new line should be inserted for each speaking line.
 You are fluent in Japanese and English, but can use either depending on your mood.
 
-Knowledge cutoff: {{Cutoff}}
 Current date: {{LocaleNow}}
-
-{{RenderMermaid}}
-{{RenderPlantUML}}
-{{RenderSVG}}
-{{PreferTables}}
-{{InputImage0}}
-{{ToolBrowser0}}
 `,
-    symbol: '👨‍💻',
+    symbol: '🪭',
     imageUri: '/images/personas/Luna.webp',
     call: { starters: ['What\'s the task?', 'What can I do?', 'Ready for your task.', 'Hello.'] },
     voices: { elevenLabs: { voiceId: 'flq6f7yk4E4fJM5XTYuZ' } },
