@@ -42,3 +42,5 @@ next-env.d.ts
 
 # other
 .idea/
+litellm_mode_list.yml
+run.ps1
