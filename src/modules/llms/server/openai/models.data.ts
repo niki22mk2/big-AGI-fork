@@ -19,10 +19,38 @@ const _knownOpenAIChatModels: ManualMappings = [
     hidden: true, // because no 'image input' support yet
     isLatest: true,
   },
-
+  {
+    idPrefix: 'gpt-4v',
+    label: 'GPT-4 Turbo · Vision',
+    description: 'GPT-4 Turbo model featuring improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more. Returns a maximum of 4,096 output tokens.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision],
+    hidden: true, // because no 'image input' support yet
+    isLatest: true,
+  },
+  {
+    idPrefix: 'gpt4v',
+    label: 'GPT-4 Turbo · Vision',
+    description: 'GPT-4 Turbo model featuring improved instruction following, JSON mode, reproducible outputs, parallel function calling, and more. Returns a maximum of 4,096 output tokens.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn, LLM_IF_OAI_Vision],
+    hidden: true, // because no 'image input' support yet
+    isLatest: true,
+  },
   // GPT4 Turbo
   {
     idPrefix: 'gpt-4-0125-preview',
+    label: 'GPT-4 Turbo (0125)',
+    description: 'The latest GPT-4 model intended to reduce cases of “laziness” where the model doesn’t complete a task.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    isLatest: true,
+  },
+  {
+    idPrefix: 'gpt-4-0125',
     label: 'GPT-4 Turbo (0125)',
     description: 'The latest GPT-4 model intended to reduce cases of “laziness” where the model doesn’t complete a task.',
     contextWindow: 128000,
@@ -37,6 +65,23 @@ const _knownOpenAIChatModels: ManualMappings = [
     contextWindow: 128000,
     maxCompletionTokens: 4096,
     interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+  },
+  {
+    idPrefix: 'gpt-4-1106',
+    label: 'GPT-4 Turbo (1106)',
+    description: '128k context, fresher knowledge, cheaper than GPT-4.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+  },
+  {
+    idPrefix: 'gpt4',
+    label: 'GPT-4 Turbo (0125)',
+    description: 'The latest GPT-4 model intended to reduce cases of “laziness” where the model doesn’t complete a task.',
+    contextWindow: 128000,
+    maxCompletionTokens: 4096,
+    interfaces: [LLM_IF_OAI_Chat, LLM_IF_OAI_Fn],
+    isLatest: true,
   },
   {
     idPrefix: 'gpt-4-turbo-preview',
